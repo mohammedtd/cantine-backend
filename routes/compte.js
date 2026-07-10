@@ -67,4 +67,40 @@ router.post('/paiement', auth, async (req, res) => {
   }
 });
 
+// modifier les infos du profil
+router.put('/update', auth, async (req, res) => {
+  try {
+    const { nom, email, classe } = req.body;
+
+    if (!nom || !email || !classe) {
+      return res.status(400).json({ message: 'Tous les champs sont obligatoires' });
+    }
+    
+    // vérifier si l'email existe déjà pour un autre utilisateur
+    if (email !== req.utilisateur.email) {
+      const existe = await Utilisateur.findOne({ email });
+      if (existe) {
+        return res.status(400).json({ message: 'Cet email est déjà utilisé' });
+      }
+    }
+
+    const updated = await Utilisateur.findByIdAndUpdate(
+      req.utilisateur._id,
+      { nom, email, classe },
+      { new: true }
+    );
+
+    res.json({
+      id: updated._id,
+      nom: updated.nom,
+      email: updated.email,
+      classe: updated.classe,
+      solde: updated.solde,
+      role: updated.role
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

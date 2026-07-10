@@ -9,6 +9,7 @@ const app = express();
 const corsOptions = {
   origin: [
     'http://localhost:4200',
+    'https://cantine-app-blue.vercel.app',
     /\.vercel\.app$/
   ],
   credentials: true
