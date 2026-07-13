@@ -121,7 +121,7 @@ router.post('/forgot-password', async (req, res) => {
     await utilisateur.save();
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
-    const resetLink = `${frontendUrl}/reset-password?token=${token}`;
+    const resetLink = `${frontendUrl}/#/reset-password?token=${token}`;
 
     await envoyerEmailBrevo({
       to: email,
