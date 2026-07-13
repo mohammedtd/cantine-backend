@@ -152,7 +152,7 @@ router.post('/forgot-password', async (req, res) => {
     res.json({ message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
   } catch (err) {
     console.error('Erreur forgot-password:', err);
-    res.status(500).json({ message: "Erreur lors de l'envoi de l'email. Vérifiez la configuration email." });
+    res.status(500).json({ message: `Erreur SMTP: ${err.message || err}` });
   }
 });
 
