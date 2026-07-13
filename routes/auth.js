@@ -15,7 +15,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.BREVO_SMTP_LOGIN,
     pass: process.env.BREVO_SMTP_KEY,
   },
+  connectionTimeout: 10000, // 10s max pour se connecter
+  greetingTimeout: 10000,
 });
+
 
 
 // inscription
