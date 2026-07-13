@@ -8,6 +8,8 @@ const utilisateurSchema = new mongoose.Schema({
   classe: { type: String, default: '3ème A' },
   solde: { type: Number, default: 0 },
   role: { type: String, enum: ['eleve', 'admin'], default: 'eleve' },
+  resetToken: { type: String, default: null },
+  resetTokenExpiry: { type: Date, default: null },
 });
 
 // comparer le mot de passe
