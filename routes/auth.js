@@ -130,8 +130,8 @@ router.post('/forgot-password', async (req, res) => {
       html: `
         <div style="font-family:'Segoe UI',sans-serif;max-width:520px;margin:auto;background:#f9f9f9;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
           <div style="background:#E8001C;padding:32px;text-align:center;">
-            <div style="font-size:2.5rem;">🍽️</div>
-            <h1 style="color:white;margin:10px 0 0;font-size:1.4rem;font-weight:800;">CantineApp</h1>
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f373.png" width="60" height="60" alt="🍳" style="display:block;margin:0 auto 10px;background:white;padding:12px;border-radius:18px;box-shadow:0 4px 10px rgba(0,0,0,0.1);">
+            <h1 style="color:white;margin:5px 0 0;font-size:1.4rem;font-weight:800;">CantineApp</h1>
           </div>
           <div style="padding:36px;">
             <h2 style="color:#2d2d2d;font-size:1.15rem;margin-bottom:8px;">Réinitialisation du mot de passe</h2>
