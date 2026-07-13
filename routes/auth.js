@@ -4,22 +4,29 @@ const jwt = require('jsonwebtoken');
 const Utilisateur = require('../models/Utilisateur');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const axios = require('axios');
 
-// Transporteur email (Brevo SMTP)
-const transporter = nodemailer.createTransport({
-  host: 'smtp-relay.brevo.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.BREVO_SMTP_LOGIN,
-    pass: process.env.BREVO_SMTP_KEY,
-  },
-  connectionTimeout: 10000, // 10s max pour se connecter
-  greetingTimeout: 10000,
-});
-
-
+// Envoi d'email via l'API HTTP Brevo (évite les blocages SMTP des hébergeurs)
+async function envoyerEmailBrevo({ to, toName, subject, html }) {
+  await axios.post(
+    'https://api.brevo.com/v3/smtp/email',
+    {
+      sender: {
+        name: 'CantineApp',
+        email: process.env.BREVO_FROM_EMAIL,
+      },
+      to: [{ email: to, name: toName }],
+      subject,
+      htmlContent: html,
+    },
+    {
+      headers: {
+        'api-key': process.env.BREVO_API_KEY,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+}
 
 // inscription
 router.post('/register', async (req, res) => {
@@ -96,20 +103,18 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// mot de passe oublié — envoie un email avec un lien de réinitialisation
+// mot de passe oublié — envoie un email via l'API Brevo
 router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
 
     const utilisateur = await Utilisateur.findOne({ email });
     if (!utilisateur) {
-      // Répondre toujours OK pour ne pas révéler si l'email existe
       return res.json({ message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
     }
 
-    // Générer un token sécurisé (64 hex chars)
     const token = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 60 * 60 * 1000); // expire dans 1 heure
+    const expiry = new Date(Date.now() + 60 * 60 * 1000);
 
     utilisateur.resetToken = token;
     utilisateur.resetTokenExpiry = expiry;
@@ -118,9 +123,9 @@ router.post('/forgot-password', async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
-    await transporter.sendMail({
-      from: `"CantineApp 🍽️" <${process.env.BREVO_FROM_EMAIL}>`,
+    await envoyerEmailBrevo({
       to: email,
+      toName: utilisateur.nom,
       subject: 'Réinitialisation de votre mot de passe — CantineApp',
       html: `
         <div style="font-family:'Segoe UI',sans-serif;max-width:520px;margin:auto;background:#f9f9f9;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);">
@@ -133,8 +138,7 @@ router.post('/forgot-password', async (req, res) => {
             <p style="color:#555;line-height:1.7;margin-bottom:8px;">Bonjour <strong>${utilisateur.nom}</strong>,</p>
             <p style="color:#555;line-height:1.7;">Nous avons reçu une demande de réinitialisation de mot de passe pour votre compte CantineApp. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
             <div style="text-align:center;margin:32px 0;">
-              <a href="${resetLink}"
-                 style="background:#E8001C;color:white;padding:15px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1rem;display:inline-block;">
+              <a href="${resetLink}" style="background:#E8001C;color:white;padding:15px 36px;border-radius:12px;text-decoration:none;font-weight:700;font-size:1rem;display:inline-block;">
                 🔑 Réinitialiser mon mot de passe
               </a>
             </div>
@@ -151,8 +155,8 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({ message: 'Si cet email existe, un lien de réinitialisation a été envoyé.' });
   } catch (err) {
-    console.error('Erreur forgot-password:', err);
-    res.status(500).json({ message: `Erreur SMTP: ${err.message || err}` });
+    console.error('Erreur forgot-password:', err.response?.data || err.message);
+    res.status(500).json({ message: `Erreur envoi email: ${err.response?.data?.message || err.message}` });
   }
 });
 
